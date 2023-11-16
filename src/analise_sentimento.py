@@ -4,6 +4,7 @@ import dotenv
 import openai
 from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from configuration.logger_config import logger
 
 
 # Tratamento de Exceções e Retentativa de Chamadas da API OpenIA
@@ -28,7 +29,7 @@ def analise_sentimento(nome_do_produto):
     """
 
     prompt_usuario = carrega(f"src/resources/data/avaliacoes-{nome_do_produto}.txt")
-    print(f"Iniciando a análise do produto: {nome_do_produto}")
+    logger.info(f"Iniciando a análise do produto: {nome_do_produto}")
 
     try:
         client = OpenAI(
@@ -55,27 +56,27 @@ def analise_sentimento(nome_do_produto):
         )
 
         salva(f"src/resources/data/analise-{nome_do_produto}", result.choices[0].message.content)
-        print("Análise concluída com sucesso!")
+        logger.info("Análise concluída com sucesso!")
         return
     except openai.AuthenticationError as e:
-        print(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
+        logger.error(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
     except openai.APITimeoutError as e:
-        print(f"Timeout na chamada da API: {e}")
+        logger.error(f"Timeout na chamada da API: {e}")
         raise
     except openai.APIConnectionError as e:
-        print(f"Falha ao conectar com OpenAI: {e}")
+        logger.error(f"Falha ao conectar com OpenAI: {e}")
     except openai.RateLimitError as e:
-        print(f"OpenAI API requisição excedeu o limite: {e}")
+        logger.error(f"OpenAI API requisição excedeu o limite: {e}")
         raise
     except openai.UnprocessableEntityError as e:
-        print(f"Entidade não processada: {e}")
+        logger.error(f"Entidade não processada: {e}")
         raise
     except openai.InternalServerError as e:
-        print(f"Erro no retorno da chamada da API: {e}")
+        logger.error(f"Erro no retorno da chamada da API: {e}")
         raise
     except openai.APIError as e:
-        print(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
-        print("Pulando para o proximo item")
+        logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
+        logger.error("Pulando para o proximo item")
 
 
 def carrega(nome_do_arquivo):
@@ -84,7 +85,7 @@ def carrega(nome_do_arquivo):
             dados = arquivo.read()
             return dados
     except IOError as e:
-        print(f"Erro no carregamento de arquivo: {e}")
+        logger.error(f"Erro no carregamento de arquivo: {e}")
 
 
 def salva(nome_do_arquivo, conteudo):
@@ -92,7 +93,7 @@ def salva(nome_do_arquivo, conteudo):
         with open(nome_do_arquivo, "w", encoding="utf-8") as arquivo:
             arquivo.write(conteudo)
     except IOError as e:
-        print(f"Erro ao salvar arquivo: {e}")
+        logger.error(f"Erro ao salvar arquivo: {e}")
 
 
 dotenv.load_dotenv()
