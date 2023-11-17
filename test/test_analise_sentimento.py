@@ -1,7 +1,7 @@
 import os
 import unittest
-from unittest.mock import patch, MagicMock
-from src.analise_sentimento import analise_sentimento  # ou importe a função que deseja testar
+from unittest.mock import patch
+from generativeai.recomendacao.analise_sentimento import analise_sentimento  # ou importe a função que deseja testar
 
 
 class TestAnaliseSentimento(unittest.TestCase):
