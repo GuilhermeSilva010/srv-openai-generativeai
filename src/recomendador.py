@@ -1,3 +1,4 @@
+import json
 import os
 
 import openai
@@ -103,14 +104,22 @@ lista_de_compras_por_cliente = carrega(f"{path}/lista_de_compras_10_clientes.csv
 prompt_sistema = """
 Identifique o perfil de compra para cada cliente a seguir.
 
-O formato de saída deve ser:
+O formato de saída deve ser em json:
 
-cliente - descreva o perfil do cliente em 3 palavras
+{
+    "clientes": [
+        {
+            "nome": "nome cliente",
+            "perfil": "descreva o perfil do cliente em 3 palavras"
+        }
+    ]
+}
   """
 
 modelo = modelo_gpt(prompt_sistema, lista_de_compras_por_cliente)
 conteudo = openai_assistant(prompt_sistema, lista_de_compras_por_cliente, modelo)
-logger.info(f"Descrição perfil de clientes: {conteudo}")
+
+perfis = json.loads(conteudo)
 
 prompt_sistema = """
 A partir do perfil do cliente, crie recomendações de produtos.
@@ -141,8 +150,8 @@ Atenciosamente,
 GenerativeAI
   """
 
-cliente_perfil = conteudo.splitlines()
 modelo = modelo_gpt(prompt_sistema, conteudo)
-for perfil in cliente_perfil:
-    recomendacao_email = openai_assistant(prompt_sistema, conteudo, modelo)
+for perfil in perfis["clientes"]:
+    logger.info(f"Descrição de perfil cliente: {perfil['nome']}")
+    recomendacao_email = openai_assistant(prompt_sistema, perfil["perfil"], modelo)
     envia_email(recomendacao_email)

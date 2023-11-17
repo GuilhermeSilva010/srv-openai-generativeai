@@ -30,7 +30,7 @@ def categorizar_produto(nome_produto, categorias_validas):
     Esportes
     """
     result = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "system",
