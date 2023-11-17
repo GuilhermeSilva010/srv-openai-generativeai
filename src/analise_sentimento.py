@@ -28,7 +28,11 @@ def analise_sentimento(nome_do_produto):
     Pontos fracos: [3 bullet points]
     """
 
-    prompt_usuario = carrega(f"src/resources/data/avaliacoes-{nome_do_produto}.txt")
+    path_resources = os.getenv("PATH_RESOURCES")
+
+    path = os.path.join(os.path.abspath(path_resources), "data")
+
+    prompt_usuario = carrega(f"{path}/avaliacoes-{nome_do_produto}.txt")
     logger.info(f"Iniciando a análise do produto: {nome_do_produto}")
 
     try:
@@ -55,7 +59,7 @@ def analise_sentimento(nome_do_produto):
             top_p=1
         )
 
-        salva(f"src/resources/data/analise-{nome_do_produto}", result.choices[0].message.content)
+        salva(f"{path}/analise-{nome_do_produto}", result.choices[0].message.content)
         logger.info("Análise concluída com sucesso!")
         return
     except openai.AuthenticationError as e:
@@ -105,3 +109,4 @@ lista_de_produtos = ["DVD player automotivo", "Esteira elétrica para fitness", 
                      "Boia inflável para piscina"]
 for nome_do_produto in lista_de_produtos:
     analise_sentimento(nome_do_produto)
+

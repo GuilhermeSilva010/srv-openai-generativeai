@@ -17,9 +17,10 @@ def setup_logger():
 
     # Obter informações do ambiente
     application_name = os.getenv("APPLICATION_NAME")
+    path_logs = os.getenv("PATH_RESOURCES")
 
     # Diretório de logs
-    log_directory = os.path.abspath('logs')
+    log_directory = os.path.join(os.path.abspath(path_logs), "logs")
 
     # Verificar se o diretório de logs existe; criar se não existir
     os.makedirs(log_directory, exist_ok=True)
