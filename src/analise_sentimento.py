@@ -4,6 +4,7 @@ import dotenv
 import openai
 from openai import OpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from configuration.logger_config import logger
 
 
 # Tratamento de Exceções e Retentativa de Chamadas da API OpenIA
@@ -13,6 +14,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_excep
        wait=wait_exponential(multiplier=1, min=5, max=10),
        stop=stop_after_attempt(3))
 def analise_sentimento(nome_do_produto):
+
     prompt_sistema = """
     Você é um analisador de sentimentos de avaliações de produtos.
     Escreva um parágrafo com até 50 palavras resumindo as avaliações e depois atribua qual o sentimento geral para o produto.
@@ -27,8 +29,12 @@ def analise_sentimento(nome_do_produto):
     Pontos fracos: [3 bullet points]
     """
 
-    prompt_usuario = carrega(f"src/resources/data/avaliacoes-{nome_do_produto}.txt")
-    print(f"Iniciando a análise do produto: {nome_do_produto}")
+    path_resources = os.getenv("PATH_RESOURCES")
+
+    path = os.path.join(os.path.abspath(path_resources), "data")
+
+    prompt_usuario = carrega(f"{path}/avaliacoes-{nome_do_produto}.txt")
+    logger.info(f"Iniciando a análise do produto: {nome_do_produto}")
 
     try:
         client = OpenAI(
@@ -54,28 +60,28 @@ def analise_sentimento(nome_do_produto):
             top_p=1
         )
 
-        salva(f"src/resources/data/analise-{nome_do_produto}", result.choices[0].message.content)
-        print("Análise concluída com sucesso!")
+        salva(f"{path}/analise-{nome_do_produto}", result.choices[0].message.content)
+        logger.info("Análise concluída com sucesso!")
         return
     except openai.AuthenticationError as e:
-        print(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
+        logger.error(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
     except openai.APITimeoutError as e:
-        print(f"Timeout na chamada da API: {e}")
+        logger.error(f"Timeout na chamada da API: {e}")
         raise
     except openai.APIConnectionError as e:
-        print(f"Falha ao conectar com OpenAI: {e}")
+        logger.error(f"Falha ao conectar com OpenAI: {e}")
     except openai.RateLimitError as e:
-        print(f"OpenAI API requisição excedeu o limite: {e}")
+        logger.error(f"OpenAI API requisição excedeu o limite: {e}")
         raise
     except openai.UnprocessableEntityError as e:
-        print(f"Entidade não processada: {e}")
+        logger.error(f"Entidade não processada: {e}")
         raise
     except openai.InternalServerError as e:
-        print(f"Erro no retorno da chamada da API: {e}")
+        logger.error(f"Erro no retorno da chamada da API: {e}")
         raise
     except openai.APIError as e:
-        print(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
-        print("Pulando para o proximo item")
+        logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
+        logger.error("Pulando para o proximo item")
 
 
 def carrega(nome_do_arquivo):
@@ -84,7 +90,7 @@ def carrega(nome_do_arquivo):
             dados = arquivo.read()
             return dados
     except IOError as e:
-        print(f"Erro no carregamento de arquivo: {e}")
+        logger.error(f"Erro no carregamento de arquivo: {e}")
 
 
 def salva(nome_do_arquivo, conteudo):
@@ -92,7 +98,7 @@ def salva(nome_do_arquivo, conteudo):
         with open(nome_do_arquivo, "w", encoding="utf-8") as arquivo:
             arquivo.write(conteudo)
     except IOError as e:
-        print(f"Erro ao salvar arquivo: {e}")
+        logger.error(f"Erro ao salvar arquivo: {e}")
 
 
 dotenv.load_dotenv()
@@ -104,3 +110,4 @@ lista_de_produtos = ["DVD player automotivo", "Esteira elétrica para fitness", 
                      "Boia inflável para piscina"]
 for nome_do_produto in lista_de_produtos:
     analise_sentimento(nome_do_produto)
+
