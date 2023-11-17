@@ -62,3 +62,6 @@ Para obter suporte adicional, consulte a documentação do OpenAI e fique atento
 ### Créditos
 
 - Alura - [link](https://cursos.alura.com.br/loginForm)
+- Jeferson Rodrigues da Silva
+- Guilherme Carvalho - Linkedin - [link](https://www.linkedin.com/in/guilherme-carvalho010/)
+- 
