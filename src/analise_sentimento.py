@@ -14,6 +14,7 @@ from configuration.logger_config import logger
        wait=wait_exponential(multiplier=1, min=5, max=10),
        stop=stop_after_attempt(3))
 def analise_sentimento(nome_do_produto):
+
     prompt_sistema = """
     Você é um analisador de sentimentos de avaliações de produtos.
     Escreva um parágrafo com até 50 palavras resumindo as avaliações e depois atribua qual o sentimento geral para o produto.
