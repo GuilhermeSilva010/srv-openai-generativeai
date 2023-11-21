@@ -15,20 +15,110 @@ def salva(nome_do_arquivo, conteudo):
     except IOError as e:
         print(f"Erro ao salvar arquivo: {e}")
 
+def openai_assistant_chat_resume_imagem(resumo):
+    print("Resumindo com o gpt para um post do instagram ...")
 
-def openai_assistant(audio_file):
-    load_dotenv()
+    prompt_sistema = """
+    Assuma que você é um digital influencer digital e que está construíndo conteúdos das áreas de tecnologia em uma plataforma de áudio (podcast).
+
+    Os textos produzidos devem levar em consideração uma peresona que consumirá os conteúdos gerados. Leve em consideração:
+
+    - Seus seguidores são pessoas super conectadas da área de tecnologia, que amam consumir conteúdos relacionados aos principais temas da área de computação.
+    - Você deve utilizar o gênero neutro na construção do seu texto
+    - Os textos serão utilizados para convidar pessoas do instagram para consumirem seu conteúdo de áudio
+    - O texto deve ser escrito em português do Brasil.
+
+    """
+    prompt_usuario = ". \nReescreva a transcrição acima para que possa ser postado como uma legenda do Instagram. Ela deve resumir o texto para chamada na rede social. Inclua hashtags"
+
     try:
         client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY")
         )
-        logger.info("iniciando Transcrição de Aúdio")
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file
+
+        result = client.chat.completions.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt_sistema
+                },
+                {
+                    "role": "user",
+                    "content": prompt_usuario
+                }
+            ],
+            temperature=1,
+            max_tokens=2048,
+            presence_penalty=0,
+            frequency_penalty=0,
+            top_p=1
         )
-        logger.info("Finalizando Transcrição de Aúdio")
-        conteudo = transcript.choices[0].message.content
+
+        conteudo = result.choices[0].message.content
+        return conteudo
+    except openai.AuthenticationError as e:
+        logger.error(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
+    except openai.APITimeoutError as e:
+        logger.error(f"Timeout na chamada da API: {e}")
+        raise
+    except openai.APIConnectionError as e:
+        logger.error(f"Falha ao conectar com OpenAI: {e}")
+    except openai.RateLimitError as e:
+        logger.error(f"OpenAI API requisição excedeu o limite: {e}")
+        raise
+    except openai.UnprocessableEntityError as e:
+        logger.error(f"Entidade não processada: {e}")
+        raise
+    except openai.InternalServerError as e:
+        logger.error(f"Erro no retorno da chamada da API: {e}")
+        raise
+    except openai.APIError as e:
+        logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
+        logger.error("Pulando para o proximo item")
+def openai_assistant_hashtags(resumo_instagram):
+    print("Gerando as hashtags com a open ai ... ")
+
+    prompt_sistema = """
+        Assuma que você é um digital influencer digital e que está construíndo conteúdos das áreas de tecnologia em uma plataforma de áudio (podcast).
+
+        Os textos produzidos devem levar em consideração uma peresona que consumirá os conteúdos gerados. Leve em consideração:
+
+        - Seus seguidores são pessoas super conectadas da área de tecnologia, que amam consumir conteúdos relacionados aos principais temas da área de computação.
+        - Você deve utilizar o gênero neutro na construção do seu texto
+        - Os textos serão utilizados para convidar pessoas do instagram para consumirem seu conteúdo de áudio
+        - O texto deve ser escrito em português do Brasil.
+        - A saída deve conter 5 hashtags.
+
+        """
+
+    prompt_usuario = f'Aqui está um resumo de um texto "{resumo_instagram}". Por favor, gere 5 hashtags que sejam relevantes para este texto e que possam ser publicadas no Instagram.  Por favor, faça isso em português do Brasil '
+
+    try:
+        client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
+
+        result = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt_sistema
+                },
+                {
+                    "role": "user",
+                    "content": prompt_usuario
+                }
+            ],
+            temperature=0.6,
+            max_tokens=2048,
+            presence_penalty=0,
+            frequency_penalty=0,
+            top_p=1
+        )
+
+        conteudo = result.choices[0].message.content
         return conteudo
     except openai.AuthenticationError as e:
         logger.error(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
@@ -51,9 +141,140 @@ def openai_assistant(audio_file):
         logger.error("Pulando para o proximo item")
 
 
-def transcription():
-    caminho_audio = "SnapInsta.io - Tchau Obrigado 2 - MC Ryan SP, Kadu, IG, MC GP, Kanhoto, Paulin Da Capital, MC GH Do 7 (DJ Victor) (128 kbps).mp3"
+def openai_assistant_chat_resume(transcricao):
+    print("Resumindo com o gpt para um post do instagram ...")
 
+    prompt_sistema = """
+    Assuma que você é um digital influencer digital e que está construíndo conteúdos das áreas de tecnologia em uma plataforma de áudio (podcast).
+
+    Os textos produzidos devem levar em consideração uma peresona que consumirá os conteúdos gerados. Leve em consideração:
+
+    - Seus seguidores são pessoas super conectadas da área de tecnologia, que amam consumir conteúdos relacionados aos principais temas da área de computação.
+    - Você deve utilizar o gênero neutro na construção do seu texto
+    - Os textos serão utilizados para convidar pessoas do instagram para consumirem seu conteúdo de áudio
+    - O texto deve ser escrito em português do Brasil.
+
+    """
+    prompt_usuario = ". \nReescreva a transcrição acima para que possa ser postado como uma legenda do Instagram. Ela deve resumir o texto para chamada na rede social. Inclua hashtags"
+
+    try:
+        client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
+
+        result = client.chat.completions.create(
+            model="gpt-3.5-turbo-16k",
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt_sistema
+                },
+                {
+                    "role": "user",
+                    "content": transcricao + prompt_usuario
+                }
+            ],
+            temperature=1,
+            max_tokens=2048,
+            presence_penalty=0,
+            frequency_penalty=0,
+            top_p=1
+        )
+
+        conteudo = result.choices[0].message.content
+        return conteudo
+    except openai.AuthenticationError as e:
+        logger.error(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
+    except openai.APITimeoutError as e:
+        logger.error(f"Timeout na chamada da API: {e}")
+        raise
+    except openai.APIConnectionError as e:
+        logger.error(f"Falha ao conectar com OpenAI: {e}")
+    except openai.RateLimitError as e:
+        logger.error(f"OpenAI API requisição excedeu o limite: {e}")
+        raise
+    except openai.UnprocessableEntityError as e:
+        logger.error(f"Entidade não processada: {e}")
+        raise
+    except openai.InternalServerError as e:
+        logger.error(f"Erro no retorno da chamada da API: {e}")
+        raise
+    except openai.APIError as e:
+        logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
+        logger.error("Pulando para o proximo item")
+
+
+def openai_assistant_whisper(audio_file):
+    load_dotenv()
+    try:
+        client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
+        logger.info("iniciando Transcrição de Aúdio")
+        transcript = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file
+        )
+        logger.info("Finalizando Transcrição de Aúdio")
+        conteudo = transcript.text
+        return conteudo
+    except openai.AuthenticationError as e:
+        logger.error(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
+    except openai.APITimeoutError as e:
+        logger.error(f"Timeout na chamada da API: {e}")
+        raise
+    except openai.APIConnectionError as e:
+        logger.error(f"Falha ao conectar com OpenAI: {e}")
+    except openai.RateLimitError as e:
+        logger.error(f"OpenAI API requisição excedeu o limite: {e}")
+        raise
+    except openai.UnprocessableEntityError as e:
+        logger.error(f"Entidade não processada: {e}")
+        raise
+    except openai.InternalServerError as e:
+        logger.error(f"Erro no retorno da chamada da API: {e}")
+        raise
+    except openai.APIError as e:
+        logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
+        logger.error("Pulando para o proximo item")
+
+def openai_assistant_dall_e(texto_imagem):
+    load_dotenv()
+    try:
+        client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
+        logger.info("iniciando Transcrição de Aúdio")
+        client.images.generate(
+            model="dall-e-3",
+            prompt=texto_imagem,
+            n=1,
+            size="1024x1024"
+        )
+        logger.info("Finalizando Transcrição de Aúdio")
+        conteudo = transcript.text
+        return conteudo
+    except openai.AuthenticationError as e:
+        logger.error(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
+    except openai.APITimeoutError as e:
+        logger.error(f"Timeout na chamada da API: {e}")
+        raise
+    except openai.APIConnectionError as e:
+        logger.error(f"Falha ao conectar com OpenAI: {e}")
+    except openai.RateLimitError as e:
+        logger.error(f"OpenAI API requisição excedeu o limite: {e}")
+        raise
+    except openai.UnprocessableEntityError as e:
+        logger.error(f"Entidade não processada: {e}")
+        raise
+    except openai.InternalServerError as e:
+        logger.error(f"Erro no retorno da chamada da API: {e}")
+        raise
+    except openai.APIError as e:
+        logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
+        logger.error("Pulando para o proximo item")
+def transcription():
+    caminho_audio = "teste.mp3"
 
     nome_arquivo = "Tchau Obrigado 2 - MC Ryan SP, Kadu, IG, MC GP, Kanhoto, Paulin Da Capital, MC GH Do 7 (DJ Victor)"
     url_podcast = "https://www.youtube.com/watch?v=8dfSth3DrO4"
@@ -61,11 +282,26 @@ def transcription():
     path_resources = abs_path_resource()
 
     path = os.path.join(path_resources, "data", "audio")
+    path_audio = f"{path}/{caminho_audio}"
 
-    audio_file = open(caminho_audio, "rb")
+    audio_file = open(path_audio, "rb")  # mudar para o metodo carrega, separando eles em um arquivo files.
     logger.info("Leitura do arquivo efetuada com sucesso")
-    transcricao = openai_assistant(audio_file)
+    transcricao = openai_assistant_whisper(audio_file)
 
-    salva(f"{path}/trascricao-{nome_arquivo}", transcricao)
+    resumo_transcricao = openai_assistant_chat_resume(transcricao)
+    logger.info("Resumo Feito com sucesso")
+    logger.info("Iniciando geração de hashtags")
+    hashtags = openai_assistant_hashtags(resumo_transcricao)
+    logger.info("Finalizando geração de hashtags")
+
+    resumo_transcricao.join(f"\n{hashtags}")
+
+    logger.info("iniciando geração de texto para criação de imagem")
+    texto_imagem = openai_assistant_chat_resume_imagem(resumo_transcricao)
+
+    imagem = openai_assistant_dall_e(texto_imagem)
+
+    salva(f"{path}/resumo-insta-{nome_arquivo}", resumo_transcricao)
+
 
 transcription()
