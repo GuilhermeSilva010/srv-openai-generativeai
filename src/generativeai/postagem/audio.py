@@ -1,6 +1,10 @@
 import openai
+import requests
+from PIL import Image
 from dotenv import load_dotenv
 import os
+from instabot import Bot
+import shutil
 
 from openai import OpenAI
 
@@ -14,6 +18,7 @@ def salva(nome_do_arquivo, conteudo):
             arquivo.write(conteudo)
     except IOError as e:
         print(f"Erro ao salvar arquivo: {e}")
+
 
 def openai_assistant_chat_resume_imagem(resumo):
     print("Resumindo com o gpt para um post do instagram ...")
@@ -76,6 +81,8 @@ def openai_assistant_chat_resume_imagem(resumo):
     except openai.APIError as e:
         logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
         logger.error("Pulando para o proximo item")
+
+
 def openai_assistant_hashtags(resumo_instagram):
     print("Gerando as hashtags com a open ai ... ")
 
@@ -238,41 +245,78 @@ def openai_assistant_whisper(audio_file):
         logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
         logger.error("Pulando para o proximo item")
 
+
 def openai_assistant_dall_e(texto_imagem):
     load_dotenv()
     try:
         client = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY")
         )
-        logger.info("iniciando Transcrição de Aúdio")
-        client.images.generate(
+        logger.info("Criando Imagem utilizando a API do DALL-E")
+
+        image = client.images.generate(
             model="dall-e-3",
-            prompt=texto_imagem,
+            quality='hd',
+            prompt=f"Uma pintura ultra futurista, textless, 3d que retrate {texto_imagem}",
             n=1,
             size="1024x1024"
         )
-        logger.info("Finalizando Transcrição de Aúdio")
-        conteudo = transcript.text
-        return conteudo
-    except openai.AuthenticationError as e:
-        logger.error(f"Erro de autenticação, verifique as credenciais enviadas ao OpenAI: {e}")
-    except openai.APITimeoutError as e:
-        logger.error(f"Timeout na chamada da API: {e}")
-        raise
-    except openai.APIConnectionError as e:
-        logger.error(f"Falha ao conectar com OpenAI: {e}")
-    except openai.RateLimitError as e:
-        logger.error(f"OpenAI API requisição excedeu o limite: {e}")
-        raise
-    except openai.UnprocessableEntityError as e:
-        logger.error(f"Entidade não processada: {e}")
-        raise
-    except openai.InternalServerError as e:
-        logger.error(f"Erro no retorno da chamada da API: {e}")
-        raise
+        logger.info("Finalizando Geração de Imagens")
+
+        return image.data
     except openai.APIError as e:
         logger.error(f"Ocorreu um erro com essa chamada, verifique mais tarde o problema: {e}")
         logger.error("Pulando para o proximo item")
+
+
+def postar_instagram(caminho_imagem, texto, user, password):
+    if os.path.exists("config"):
+        shutil.rmtree("config")
+    bot = Bot()
+
+    bot.login(username=user, password=password)
+
+    resposta = bot.upload_photo(caminho_imagem, caption=texto)
+
+def ferramenta_download_imagem(imagem_gerada):
+    lista_nome_imagens = []
+    try:
+        ## alterar por quantidade de imagens invés de 4 - criar variavel
+        for contador_imagens in range(0, 1):
+            caminho = imagem_gerada[contador_imagens].url
+            imagem = requests.get(caminho)
+
+            with open(f"alura_{contador_imagens}.png", "wb") as arquivo_imagem:
+                arquivo_imagem.write(imagem.content)
+
+            lista_nome_imagens.append(f"alura_{contador_imagens}.png")
+        return lista_nome_imagens
+    except:
+        print("Ocorreu um erro!")
+        return None
+
+
+# código omitido
+
+def ferramenta_converter_png_para_jpg(caminho_imagem_escolhida):
+    img_png = Image.open(caminho_imagem_escolhida)
+    img_png.save(caminho_imagem_escolhida.split(".")[0] + ".jpg")
+
+    return caminho_imagem_escolhida.split(".")[0] + ".jpg"
+
+
+def confirmacao_postagem(caminho_imagem_convertida, Legenda_postagem):
+    print("f\nCaminho Imagem: (caminho_imagem_convertida}")
+    print(f"\Legenda: {Legenda_postagem}")
+
+    print("\n\nDeseja postar os dados acima no seu instagram? Digite 's' para sim e 'n' para não.")
+    return input()
+
+def ferramenta_conversao_binario_para_string(texto):
+    if isinstance(texto, bytes):
+        return str(texto.decode())
+    return texto
+
 def transcription():
     caminho_audio = "teste.mp3"
 
@@ -299,9 +343,23 @@ def transcription():
     logger.info("iniciando geração de texto para criação de imagem")
     texto_imagem = openai_assistant_chat_resume_imagem(resumo_transcricao)
 
-    imagem = openai_assistant_dall_e(texto_imagem)
+    # imagens_data = openai_assistant_dall_e(texto_imagem)
+    #
+    # ferramenta_download_imagem(imagens_data)
 
-    salva(f"{path}/resumo-insta-{nome_arquivo}", resumo_transcricao)
+    legenda_imagem = f"Link do Podcast: {ferramenta_conversao_binario_para_string(url_podcast)} \n {ferramenta_conversao_binario_para_string(resumo_transcricao)} \n {ferramenta_conversao_binario_para_string(hashtags)}"
+
+    logger.info(legenda_imagem)
+    logger.info(f'HASHTASG: {hashtags}')
+
+    image_jpg = ferramenta_converter_png_para_jpg('alura_escolhida.png')
+
+    if confirmacao_postagem(image_jpg, legenda_imagem).lower() == "s":
+        user = os.getenv("USER_INSTAGRAM")
+        password =  os.getenv("PASSWORD_INSTAGRAM")
+        postar_instagram('alura_0.jpg', legenda_imagem, user, password)
+
+    # salva(f"{path}/resumo-insta-{nome_arquivo}", resumo_transcricao)
 
 
 transcription()
