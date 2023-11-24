@@ -1,18 +1,24 @@
-import dotenv
 import os
-import openai
 
-dotenv.load_dotenv()
+import dotenv
+from openai import OpenAI
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def resumidor_de_historico(historico):
-    resposta_resumidor = openai.ChatCompletion.create(
+    dotenv.load_dotenv()
+
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    client = OpenAI(
+        api_key=api_key
+    )
+
+    resposta_resumidor = client.chat.completions.create(
         model='gpt-3.5-turbo',
         messages=[
             {
-            "role": "user",
-            "content": f"""
+                "role": "user",
+                "content": f"""
             Resumir progressivamente as linhas de conversa fornecidas, 
             acrescentando ao resumo anterior e retornando um novo resumo. 
             Não apague nenhum assunto da conversa. 
@@ -45,6 +51,7 @@ def resumidor_de_historico(historico):
         presence_penalty=0
     )
     return resposta_resumidor
+
 
 def criando_resumo(historico):
     resposta = resumidor_de_historico(historico=historico)
